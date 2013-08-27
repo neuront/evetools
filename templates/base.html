@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel='shortcut icon' href='http://blog.bitfoc.us/favicon.ico'>
+    <link rel='stylesheet' type='text/css' href='static/main.css'>
+    {% block includes %}{% endblock %}
+    {% block inlines %}{% endblock %}
+</head>
+<body>
+    {% include 'navigator.html' %}
+    <h1>{% block topic %}{% endblock %}</h1>
+    <hr>
+    {% block body %}{% endblock %}
