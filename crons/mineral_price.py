@@ -17,7 +17,8 @@ def _parse_for_name_price(content):
 
 @base.cron(base.HOUR)
 def fetch_prices():
-    os.makedirs('static/gen')
+    if not os.path.exists('static/gen'):
+        os.makedirs('static/gen')
     minfo = []
     for mtype in range(34, 34 + 7):
         minfo.append(_parse_for_name_price(

@@ -52,3 +52,15 @@ a:hover {
 a:active {
   color:#C5DEB3;
 }
+table {
+  border-spacing: 4px;
+}
+tbody tr td {
+  text-align: right;
+}
+.bid {
+  background-color: #311;
+}
+.offer {
+  background-color: #131;
+}

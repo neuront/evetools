@@ -1,1 +1,1 @@
-A set of tools for EVE Online (Chinese world).
+A set of tools for EVE Online (world in China).
