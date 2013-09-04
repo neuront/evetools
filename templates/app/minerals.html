@@ -15,31 +15,37 @@
 
 <div>本应用不是 <a href='http://www.ceve-market.org/home/'>EVE 国服市场中心</a>的替代物. 本应用计算出的价格仅供参考.</div>
 <table>
-<tr id='mname'>
-<th>矿物</th>
-</tr>
-<tr id='moffer'>
-<th>售价</th>
-</tr>
-<tr id='mbid'>
-<th>出价</th>
-</tr>
-<tr id='mamount'>
-<th>数量</th>
-</tr>
+    <tr id='mname'><th>矿物</th></tr>
+    <tr id='moffer'><th>售价</th></tr>
+    <tr id='mbid'><th>出价</th></tr>
+    <tr id='mboratio'><th>差价率</th></tr>
+    <tr id='mamount'><th>数量</th></tr>
 </table>
 <div>
-<p><input id='mpratio' placeholder='折扣系数 (默认为 1)'><button id='mcalc'>计算</button></p>
+<div>
+    <input id='mpratio' placeholder='折扣系数 (默认为 1)'>
+    <button id='mcalc'>计算</button>
+    <button id='mareset'>重置数量</button>
+    |
+    <input id='bpname' placeholder='请填写配置名称'>
+    <button id='bpsave'>保存配置</button>
+    <select id='bploader'>
+        <option selected="selected" disabled="disabled">选择一个配置</option>
+    </select>
+</div>
+<p id='bpinfo' style='display: none'>保存各种矿物数量到浏览器缓存, 适用于大多数蓝图, 或者计算回收收益.</p>
 <p>售价: <span id='mroffer' class='offer'>0.00</span> 折后: <span id='mdoffer' class='offer'>0.00</span></p>
 <p>出价: <span id='mrbid' class='bid'>0.00</span> 折后: <span id='mdbid' class='bid'>0.00</span></p>
 </div>
 
 <script>
 -function() {
+    var boSpreadBase = 100;
     $.each(mprices, function(i, e) {
         $('#mname').append($('<th>').text(e.name));
-        $('#moffer').append($('<td class="offer">').text(e.offer.toFixed(2)));
-        $('#mbid').append($('<td class="bid">').text(e.bid.toFixed(2)));
+        $('#moffer').append($('<td>').addClass('offer').text(e.offer.toFixed(2)));
+        $('#mbid').append($('<td>').addClass('bid').text(e.bid.toFixed(2)));
+        $('#mboratio').append($('<td>').text((e.offer * boSpreadBase / e.bid - boSpreadBase).toFixed(2)));
         $('#mamount').append($('<td>').append($('<input style="width: 100%">').attr('placeholder', e.name)));
     });
     $('#mcalc').click(function() {
@@ -58,13 +64,58 @@
         $('#mdoffer').text((offer * mpratio).toFixed(2));
         $('#mdbid').text((bid * mpratio).toFixed(2));
     });
+    $('#mareset').click(function() {
+        $('#mamount input').val('');
+        $('#mroffer,#mrbid,#mdoffer,#mdbid').text('0.00');
+    });
+
+    var bploader = $('#bploader');
+    if (typeof window.localStorage === 'undefined') {
+        window.localStorage = {};
+        $('#bpinfo').append(' 注意: 你现在所使用的浏览器不支持 HTML5 本地存储特性, 保存的配置将在页面刷新后丢失!');
+    }
+    var bps = JSON.parse(localStorage._bps || '{}');
+    for (var name in bps) {
+        bploader.append($('<option>').text(name));
+    }
+    bploader.change(function() {
+        $.each(bps[bploader.find('option:selected').text()], function(i, e) {
+            $('#mamount input')[i].value = e;
+        });
+    });
+    $('#bpsave').hover(function() {
+        $('#bpinfo').show();
+    }, function() {
+        $('#bpinfo').hide();
+    }).click(function() {
+        var name = $('#bpname').val();
+        if (!name) return;
+        bps[name] = $('#mamount input').map(function(i, e) {
+            return parseInt($(e).val()) || 0;
+        }).toArray();
+        localStorage._bps = JSON.stringify(bps);
+        bploader.append($('<option>').text(name));
+    });
 }();
 </script>
 
+<hr>
+
 <button onclick='$("#oretbl").toggle()'>显示/隐藏矿石表格</button>
+<button id='btnToggleProduction'>显示/隐藏精炼产出</button>
 <button id='btnToggleByvol'>显示/隐藏按单位体积计价</button>
 <button id='btnToggleByamount'>显示/隐藏按个数计价</button>
-<table id='oretbl'><thead></thead><tbody></tbody></table>
+<div id='oretbl'>
+<div>
+    <input id='opratio' placeholder='折扣系数 (默认为 1)'>
+    <button id='orecalc'>计价 (按个数)</button>
+    <button id='orereset'>重置数量</button>
+    <span>请在下表中最右侧栏内填写数量</span>
+</div>
+<p>售价: <span id='oroffer' class='offer'>0.00</span> 折后: <span id='odoffer' class='offer'>0.00</span></p>
+<p>出价: <span id='orbid' class='bid'>0.00</span> 折后: <span id='odbid' class='bid'>0.00</span></p>
+<table id='oresorttable'><thead></thead><tbody></tbody></table>
+</div>
 <script>
 -function () {
     var oreprice = {};
@@ -75,7 +126,7 @@
     headRow.append($('<th>').text('体积'));
     headRow.append($('<th>').text('精炼所需最少数量'));
     $.each(mprices, function(i, e) {
-        headRow.append($('<th>').text(e.name));
+        headRow.append($('<th>').addClass('mineprod').text(e.name));
     });
     headRow.append($('<th>').addClass('byvol').html('出价<br>(单位体积)'));
     headRow.append($('<th>').addClass('byvol').html('售价<br>(单位体积)'));
@@ -83,17 +134,22 @@
     headRow.append($('<th>').addClass('byamount').html('出价<br>(每个)'));
     headRow.append($('<th>').addClass('byamount').html('售价<br>(每个)'));
     headRow.append($('<th>').addClass('byamount').html('中间价<br>(每个)'));
-    headRow.append($('<td>').append($('<button>').text('计价 (按个数)').click(function() {
-        var bid = 0, offer = 0;
-        $('#oretbl input').each(function (i, e){
+    $('#orecalc').click(function() {
+        var bid = 0, offer = 0, opratio = parseFloat($('#opratio').val()) || 1;
+        $('#oresorttable input').each(function (i, e){
             e = $(e);
             bid += oreprice[e.data('orename')].bid * parseFloat(e.val()) || 0;
             offer += oreprice[e.data('orename')].offer * parseFloat(e.val()) || 0;
         });
-        $('#orebid').text(bid.toFixed(2));
-        $('#oreoffer').text(offer.toFixed(2));
-    })).append('<br>').append('出价: ').append($('<span id="orebid" class="bid">').text('0.00')
-      ).append('<br>').append(' 售价: ').append($('<span id="oreoffer" class="offer">').text('0.00')));
+        $('#orbid').text(bid.toFixed(2));
+        $('#oroffer').text(offer.toFixed(2));
+        $('#odbid').text((bid * opratio).toFixed(2));
+        $('#odoffer').text((offer * opratio).toFixed(2));
+    });
+    $('#orereset').click(function() {
+        $('#oretbl input').val('');
+        $('#odbid,#odoffer,#oroffer,orbid').text('0.00');
+    });
     var tbody = $('#oretbl tbody');
     $.each(STDORE, function(i, e) {
         var tr = $('<tr>').append($('<th>').text(e.name)
@@ -101,7 +157,7 @@
                          ).append($('<td>').text(e.refamount));
         var bid = 0, offer = 0, vol = e.vol * e.refamount;
         $.each(e.output, function(i, e) {
-            tr.append($('<td>').text(e));
+            tr.append($('<td>').addClass('mineprod').text(e));
             bid += mprices[i].bid * e;
             offer += mprices[i].offer * e;
         });
@@ -117,7 +173,10 @@
             bid: bid / e.refamount,
             offer: offer / e.refamount};
     });
-    $('#oretbl').tablesorter();
+    $('#oresorttable').tablesorter();
+    $('#btnToggleProduction').click(function() {
+        $('.mineprod').toggle();
+    });
     $('#btnToggleByvol').click(function() {
         $('.byvol').toggle();
     });
