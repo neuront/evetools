@@ -33,7 +33,7 @@
         <option selected="selected" disabled="disabled">选择一个配置</option>
     </select>
 </div>
-<p id='bpinfo' style='display: none'>保存各种矿物数量到浏览器缓存, 适用于大多数蓝图, 或者计算回收收益.</p>
+<p id='bpinfo' style='display: none'>保存各种矿物数量到浏览器缓存, 适用于大多数蓝图, 或者计算常见装备, 飞船回收收益.</p>
 <p>售价: <span id='mroffer' class='offer'>0.00</span> 折后: <span id='mdoffer' class='offer'>0.00</span></p>
 <p>出价: <span id='mrbid' class='bid'>0.00</span> 折后: <span id='mdbid' class='bid'>0.00</span></p>
 </div>
@@ -110,7 +110,11 @@
     <input id='opratio' placeholder='折扣系数 (默认为 1)'>
     <button id='orecalc'>计价 (按个数)</button>
     <button id='orereset'>重置数量</button>
-    <span>请在下表中最右侧栏内填写数量</span>
+    <span>请在下表中最右侧栏内填写数量. 单击表头可按列排序.</span>
+</div>
+<div>
+    <button id='oreapplyratio'>将折扣系数应用到矿石单价</button>
+    <span>此功能有助于设定订单单价. 不会改变中间价的显示.</span>
 </div>
 <p>售价: <span id='oroffer' class='offer'>0.00</span> 折后: <span id='odoffer' class='offer'>0.00</span></p>
 <p>出价: <span id='orbid' class='bid'>0.00</span> 折后: <span id='odbid' class='bid'>0.00</span></p>
@@ -136,7 +140,7 @@
     headRow.append($('<th>').addClass('byamount').html('中间价<br>(每个)'));
     $('#orecalc').click(function() {
         var bid = 0, offer = 0, opratio = parseFloat($('#opratio').val()) || 1;
-        $('#oresorttable input').each(function (i, e){
+        $('#oresorttable input').each(function(i, e) {
             e = $(e);
             bid += oreprice[e.data('orename')].bid * parseFloat(e.val()) || 0;
             offer += oreprice[e.data('orename')].offer * parseFloat(e.val()) || 0;
@@ -148,7 +152,18 @@
     });
     $('#orereset').click(function() {
         $('#oretbl input').val('');
-        $('#odbid,#odoffer,#oroffer,orbid').text('0.00');
+        $('#odbid,#odoffer,#oroffer,#orbid').text('0.00');
+    });
+    $('#oreapplyratio').click(function() {
+        var opratio = parseFloat($('#opratio').val()) || 1;
+        $('.byamount.bid').each(function(i, e) {
+            e = $(e);
+            e.text((e.attr('price') * opratio).toFixed(2));
+        });
+        $('.byamount.offer').each(function(i, e) {
+            e = $(e);
+            e.text((e.attr('price') * opratio).toFixed(2));
+        });
     });
     var tbody = $('#oretbl tbody');
     $.each(STDORE, function(i, e) {
@@ -164,8 +179,8 @@
         tr.append($('<td>').addClass('byvol bid').text((bid / vol).toFixed(2)));
         tr.append($('<td>').addClass('byvol offer').text((offer / vol).toFixed(2)));
         tr.append($('<td>').addClass('byvol').text(((bid + offer) / (2 * vol)).toFixed(2)));
-        tr.append($('<td>').addClass('byamount bid').text((bid / e.refamount).toFixed(2)));
-        tr.append($('<td>').addClass('byamount offer').text((offer / e.refamount).toFixed(2)));
+        tr.append($('<td>').addClass('byamount bid').attr('price', bid / e.refamount).text((bid / e.refamount).toFixed(2)));
+        tr.append($('<td>').addClass('byamount offer').attr('price', offer / e.refamount).text((offer / e.refamount).toFixed(2)));
         tr.append($('<td>').addClass('byamount').text(((bid + offer) / (2 * e.refamount)).toFixed(2)));
         tr.append($('<td>').append($('<input style="width: 100%" placeholder="数量 (' + e.name + ')">').data('orename', e.name)));
         tbody.append(tr);

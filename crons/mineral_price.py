@@ -2,6 +2,7 @@ import os
 import urllib2
 import json
 
+import logger
 import base
 
 URL_FORMAT = 'http://www.ceve-market.org/api/quicklook?typeid={mtype}&usesystem=30000142'
@@ -17,6 +18,7 @@ def _parse_for_name_price(content):
 
 @base.cron(base.HOUR)
 def fetch_prices():
+    logger.info('Start fetching mine prices.')
     if not os.path.exists('static/gen'):
         os.makedirs('static/gen')
     minfo = []
