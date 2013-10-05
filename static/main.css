@@ -58,6 +58,12 @@ table {
 tbody tr td {
   text-align: right;
 }
+.texttable td {
+  text-align: center;
+}
+.stripytable tbody tr:nth-child(2n+1) {
+  background-color: #333;
+}
 .bid {
   background-color: #311;
 }
