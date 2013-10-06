@@ -18,7 +18,7 @@ def _parse_for_name_price(content):
 
 @base.cron(base.HOUR)
 def fetch_prices():
-    logger.info('Start fetching mine prices.')
+    logger.logger.info('Start fetching mine prices.')
     if not os.path.exists('static/gen'):
         os.makedirs('static/gen')
     minfo = []
@@ -27,3 +27,4 @@ def fetch_prices():
             urllib2.urlopen(URL_FORMAT.format(mtype=mtype)).read()))
     with open('static/gen/mineral-price.js', 'wb') as mjs:
         mjs.write('var mprices=' + json.dumps(minfo))
+    logger.logger.info('Mine prices fetched.')
