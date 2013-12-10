@@ -20,6 +20,7 @@
     <tr id='mbid'><th>出价</th></tr>
     <tr id='mboratio'><th>差价率</th></tr>
     <tr id='mamount'><th>数量</th></tr>
+    <tr id='mamountextra'><th>额外数量</th></tr>
 </table>
 <div>
 <div>
@@ -46,18 +47,24 @@
         $('#moffer').append($('<td>').addClass('offer').text(e.offer.toFixed(2)));
         $('#mbid').append($('<td>').addClass('bid').text(e.bid.toFixed(2)));
         $('#mboratio').append($('<td>').text((e.offer * boSpreadBase / e.bid - boSpreadBase).toFixed(2)));
-        $('#mamount').append($('<td>').append($('<input style="width: 100%">').attr('placeholder', e.name)));
+        $('#mamount,#mamountextra').append($('<td>').append($('<input style="width: 100%">').attr('placeholder', e.name)));
     });
     $('#mcalc').click(function() {
         var offers = $('#moffer td'),
             bids = $('#mbid td'),
             amounts = $('#mamount input'),
+            amountsExtra = $('#mamountextra input'),
             mpratio = parseFloat($('#mpratio').val()) || 1;
         var len = amounts.length;
         var offer = 0, bid = 0;
+        var currAmount = 0;
+        function amountAt(i) {
+            return (parseInt(amounts[i].value) || 0) + (parseInt(amountsExtra[i].value) || 0);
+        }
         for (var i = 0; i < len; ++i) {
-            offer += parseFloat(offers[i].innerText) * (parseFloat(amounts[i].value) || 0);
-            bid += parseFloat(bids[i].innerText) * (parseFloat(amounts[i].value) || 0);
+            currAmount = amountAt(i);
+            offer += parseFloat(offers[i].innerText) * currAmount;
+            bid += parseFloat(bids[i].innerText) * currAmount;
         }
         $('#mroffer').text(offer.toFixed(2));
         $('#mrbid').text(bid.toFixed(2));
@@ -66,6 +73,7 @@
     });
     $('#mareset').click(function() {
         $('#mamount input').val('');
+        $('#mamountextra input').val('');
         $('#mroffer,#mrbid,#mdoffer,#mdbid').text('0.00');
     });
 
@@ -75,12 +83,17 @@
         $('#bpinfo').append(' 注意: 你现在所使用的浏览器不支持 HTML5 本地存储特性, 保存的配置将在页面刷新后丢失!');
     }
     var bps = JSON.parse(localStorage._bps || '{}');
+    var bpse = JSON.parse(localStorage._bpse || '{}');
     for (var name in bps) {
         bploader.append($('<option>').text(name));
     }
     bploader.change(function() {
         $.each(bps[bploader.find('option:selected').text()], function(i, e) {
             $('#mamount input')[i].value = e;
+        });
+        $('#mamountextra input').val(0);
+        $.each(bpse[bploader.find('option:selected').text()], function(i, e) {
+            $('#mamountextra input')[i].value = e;
         });
     });
     $('#bpsave').hover(function() {
@@ -93,7 +106,11 @@
         bps[name] = $('#mamount input').map(function(i, e) {
             return parseInt($(e).val()) || 0;
         }).toArray();
+        bpse[name] = $('#mamountextra input').map(function(i, e) {
+            return parseInt($(e).val()) || 0;
+        }).toArray();
         localStorage._bps = JSON.stringify(bps);
+        localStorage._bpse = JSON.stringify(bpse);
         bploader.append($('<option>').text(name));
     });
 }();
